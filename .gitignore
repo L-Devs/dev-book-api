@@ -2,9 +2,9 @@
 *.log
 *.pot
 *.pyc
-__pycache__
-db.sqlite3
-media
+.dev_book_api/dev_book_api/__pycache__
+.dev_book_api/dev_book_api/db.sqlite3
+.dev_book_api/dev_book_api/media
 
 # Backup files # 
 *.bak 
