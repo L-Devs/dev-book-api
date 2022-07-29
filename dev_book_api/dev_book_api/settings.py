@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Local Apps
-    'LAuth'
+    'LAuth',
+    'UserInformation'
 ]
 
 MIDDLEWARE = [
