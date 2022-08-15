@@ -54,7 +54,6 @@ class User(AbstractBaseUser):
         return True
 
 
-
 class Persons(models.Model):
     PersonID = models.IntegerField(default=0)
     LastName = models.CharField(max_length=255)
