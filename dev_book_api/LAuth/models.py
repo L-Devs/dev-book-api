@@ -54,7 +54,14 @@ class User(AbstractBaseUser):
         return True
 
 
+class Persons(models.Model):
+    PersonID = models.IntegerField(default=0)
+    LastName = models.CharField(max_length=255)
+    FirstName = models.CharField(max_length=255)
+    Address = models.CharField(max_length=255)
+    City = models.CharField(max_length=255)
 
-
+    def __str__(self):
+        return self.name
 
 

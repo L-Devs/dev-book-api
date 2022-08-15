@@ -23,4 +23,3 @@ def signup(request):
     if (email == None or password == None or username == None):
         return HttpResponseBadRequest("Signup Failed")
     return HttpResponse("Sign up successful!:"+username)
-
