@@ -1,7 +1,5 @@
-from lib2to3.pgen2.parse import ParseError
-from types import NoneType
 from django.http import HttpResponse, HttpResponseBadRequest
-from django.shortcuts import render
+from .models import UserAuth
 
 import requests
 
