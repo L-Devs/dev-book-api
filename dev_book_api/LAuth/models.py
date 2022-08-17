@@ -32,36 +32,36 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser):
 
     #Fields
+    userid = models.IntegerField(primary_key=True,unique=True)
     email = models.EmailField(verbose_name='email', unique=True)
-    username = models.CharField(verbose_name='username', max_length=70, unique=True)
-    is_staff = models.BooleanField(default=False)
-    is_superuser = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
+    username = models.CharField(verbose_name='username', max_length=255, unique=True)
+
+    # is_superuser = models.BooleanField(default=False)
+    # is_staff = models.BooleanField(default=False)
 
     # Unique Identifier (what to login with)
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD = 'username'
 
     # Required Fields to make a user object besides the unique identifier and password
-    REQUIRED_FIELDS = ['username']
+    REQUIRED_FIELDS = ['email']
+    
 
     objects = UserManager()
+    class Meta:
+        db_table = "Users"
 
     def __str__(self) -> str:
-        return self.email
-    def has_perm(self, perm, obj=None):
-        return self.is_superuser
-    def has_module_perms(self, app_label):
-        return True
+        return self.username
 
 
-class Persons(models.Model):
-    PersonID = models.IntegerField(default=0)
-    LastName = models.CharField(max_length=255)
-    FirstName = models.CharField(max_length=255)
-    Address = models.CharField(max_length=255)
-    City = models.CharField(max_length=255)
+class UserAuth(models.Model):
+    userid = models.IntegerField(primary_key=True,unique=True)
+    username = models.CharField(verbose_name='username', max_length=255, unique=True)
+    password = models.CharField(verbose_name='password', max_length=255)
+    active = models.BooleanField(default=True)
 
-    def __str__(self):
-        return self.name
+    class Meta:
+        db_table = "UserAuthentication"
 
-
+    def __str__(self) -> str:
+        return self.username
