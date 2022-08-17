@@ -59,6 +59,7 @@ class UserAuth(models.Model):
     username = models.CharField(verbose_name='username', max_length=255, unique=True)
     password = models.CharField(verbose_name='password', max_length=255)
     token = models.CharField(verbose_name='token', max_length=255)
+    token_expiration = models.DateTimeField()
     active = models.BooleanField(default=True)
 
     class Meta:
