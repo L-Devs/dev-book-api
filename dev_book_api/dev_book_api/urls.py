@@ -20,9 +20,10 @@ from LAuth.views import signup
 from UserInformation.views import userinfo
 
 
-urlpatterns = [
+urlpatterns = [         
     path('admin/', admin.site.urls),
     path('login/', login),
-    path("signup/", signup)
+    path("signup/", signup),
     path('userprofile/', userinfo),
+]
 
