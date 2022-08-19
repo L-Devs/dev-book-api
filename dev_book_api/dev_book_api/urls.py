@@ -22,6 +22,5 @@ from LAuth.views import signup
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('login/', login),
-    path("admin/", admin.site.urls),
     path("signup/", signup)
 ]
