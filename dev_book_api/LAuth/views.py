@@ -1,5 +1,7 @@
+import json
 from django.http import HttpResponse, HttpResponseBadRequest
 import requests
+from .models import UserAuth, User
 
 # Create your views here.
 def login(request):
@@ -13,9 +15,26 @@ def login(request):
 #Sign up function
 
 def signup(request):
-    email = request.POST.get("email")
-    password = request.POST.get("password")
-    username = request.POST.get("username")
-    if (email == None or password == None or username == None):
-        return HttpResponseBadRequest("Signup Failed")
-    return HttpResponse("Sign up successful!:"+username)
+    #TO-DO:
+    # Validation
+    # hash password
+    # add to User table
+    # idk
+    if (request.method == "POST"):
+        requestBodyUnicode = request.body.decode('utf-8')
+        requestBody = json.loads(requestBodyUnicode)
+        email = requestBody['email']
+        password = requestBody['password']
+        username = requestBody['username']
+        if (email == None or password == None or username == None):
+            return HttpResponseBadRequest("Signup Failed")
+        else:
+            userauthz = UserAuth(username=username, password=password)
+            #usermain = User(userid= userauthz.userid, username=username, email=email, password=password)
+            userauthz.save()
+            #usermain.save()
+            usersAuth_list = UserAuth.objects.all()
+            #usersMain_list = User.objects,all()
+            return HttpResponse(usersAuth_list.values_list())          
+    else:
+        return HttpResponseBadRequest("not a post request")
