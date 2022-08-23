@@ -5,10 +5,12 @@ from .models import UserAuth, User
 
 # Create your views here.
 def login(request):
-    email = request.POST.get('email')
-    password = request.POST.get('password')
-    if (email == None or password == None):
-        return HttpResponseBadRequest('No email or password.')
+    if (request.method == 'POST'):
+        jsondata = json.loads(request.body)
+        email = jsondata['email']
+        password = jsondata['password']
+        if (email == None or password == None):
+            return HttpResponseBadRequest('No email or password.')
     return HttpResponse('signed in with:'+email)
 
 
