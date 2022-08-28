@@ -31,7 +31,7 @@ SECRET_KEY = 'django-insecure-wy)0xg2jjz!hjt8__pwpyejef+)@o7#zchm8lmx1pkoz!-8n6g
 DEBUG = True
 
 ALLOWED_HOSTS = []
-AUTH_USER_MODEL = 'LAuth.User'
+#AUTH_USER_MODEL = 'LAuth.User'
 
 
 # Application definition
@@ -53,7 +53,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    #'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
