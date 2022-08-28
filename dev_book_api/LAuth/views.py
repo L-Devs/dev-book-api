@@ -19,23 +19,17 @@ def login(request):
         if (requestBody['email'] == None or requestBody['password'] == None):
             return HttpResponseBadRequest('No email or password.')
         secret_key = "6e010f75d1c0245a8631cb13371cd9dafcdaa5b3"
-        #try:
-        uservalues = User.objects.filter(email=requestBody['email']).values()
-        userauthvalues = UserAuth.objects.filter(userid=uservalues[0]['userid']).values()
-        if (uservalues[0]['email'] == requestBody['email'] and userauthvalues[0]['password']):
-            userauthobject = UserAuth.objects.get(username=uservalues[0]['username'])
-            userauthobject.token = jwt.encode(payload=requestBody, key=secret_key)
-            userauthobject.token_expiration = datetime.now() + timedelta(days = 2)
-            userauthobject.save()
-            tokendict = {"token" : userauthobject.token}
-            tokenjson = json.dumps(tokendict)
-            return JsonResponse(tokenjson, safe=False)
-        #except:
-         #   return HttpResponseBadRequest("Email isn't in database")
-
-
-        
-
+        try:
+            uservalues = User.objects.filter(email=requestBody['email']).values()
+            userauthvalues = UserAuth.objects.filter(userid=uservalues[0]['userid']).values()
+            if (uservalues[0]['email'] == requestBody['email'] and userauthvalues[0]['password']):
+                userauthobject = UserAuth.objects.get(userid=uservalues[0]['userid'])
+                userauthobject.token = jwt.encode(payload=requestBody, key=secret_key)
+                userauthobject.token_expiration = datetime.now() + timedelta(days = 2)
+                userauthobject.save()
+                return JsonResponse({"token" : userauthobject.token}, safe=False)
+        except:
+           return HttpResponseBadRequest("Email isn't in database")
     else:
         return HttpResponseBadRequest("not a post request")
 
@@ -58,10 +52,10 @@ def signup(request):
         if (email == None or password == None or username == None):
             return HttpResponseBadRequest("Signup Failed")
         else:
-            userauthz = UserAuth(username=username, password=password)
+            userauthz = UserAuth(email=email, password=password)
             userauthz.save()
 
-            temp = UserAuth.objects.filter(username=username).values()
+            temp = UserAuth.objects.filter(email=email).values()
             
             usermain = User(userid=temp[0]['userid'], username=username, email=email)    
             usermain.save()
