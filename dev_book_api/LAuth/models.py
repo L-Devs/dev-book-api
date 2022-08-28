@@ -46,9 +46,8 @@ class User(models.Model):
 
 class UserAuth(models.Model):
     userid = models.IntegerField(primary_key=True,unique=True)
-    username = models.CharField(verbose_name='username', max_length=255, unique=True)
+    email = models.EmailField(verbose_name='email', max_length=255, unique=True)
     password = models.CharField(verbose_name='password', max_length=255)
-
     token = models.CharField(verbose_name='token', max_length=256)
     token_expiration = models.DateTimeField(verbose_name='tokenExpiration')
 
@@ -58,4 +57,4 @@ class UserAuth(models.Model):
         db_table = "UserAuthentication"
 
     def __str__(self) -> str:
-        return self.username
+        return self.email
