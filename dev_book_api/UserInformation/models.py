@@ -1,7 +1,5 @@
 from django.db import models
 from django_countries.fields import CountryField
-from phone_field import PhoneField
-
 
 # Create your models here.
 
@@ -10,14 +8,13 @@ class UserInformation(models.Model):
         ('M', 'Male'),
         ('F', 'Female'),
     )
-    userid = models.IntegersField(primary_key=True,unique=True)
-    first_name = models.CharField(verbose_name='firstname', max_length=255)
-    last_name = models.CharField(verbose_name='lastname', max_length=255)
-    phone_number = models.PhoneField(verbose_name='phone', blank=True)
-    birth_date = models.DateField(verbose_name='birthdate', null = True, blank= True) 
+    userId = models.IntegerField(primary_key=True,unique=True)
+    firstName = models.CharField(verbose_name='firstname', max_length=255)
+    lastName = models.CharField(verbose_name='lastname', max_length=255)
+    birthDate = models.DateField(verbose_name='birthdate', null = True, blank= True) 
     gender = models.CharField(verbose_name='gender',max_length=1, choices=GENDER_CHOICES)
-    country = models.CountryField(verbose_name='country')
-    phone = PhoneField(verbose_name='phone', blank=True, help_text='Contact phone number')
+    phoneNumber = models.CharField(verbose_name='phone', max_length=15)
+    country = CountryField(verbose_name='country')
     
     def calculate_age(self):
         import datetime

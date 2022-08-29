@@ -1,0 +1,6 @@
+django
+django-countries
+django-phone-field
+mysql
+python-dotenv
+django-environ
