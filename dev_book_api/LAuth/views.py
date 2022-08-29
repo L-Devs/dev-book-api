@@ -5,7 +5,6 @@ import http
 import json
 from lib2to3.pgen2 import token
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
-import requests
 from .models import UserAuth, User
 from datetime import datetime, timedelta
 import jwt
@@ -20,16 +19,24 @@ def login(request):
         password = requestBody['password']
         
 
-        if (email == "" or password == ""):
-            return HttpResponseBadRequest('No email or password.')
+        if (email == None or password == None):
+            return HttpResponseBadRequest('No email or password.')   
+
+        user_list = UserAuth.objects.filter(email=email).values_list()
+        if(not user_list):
+            return JsonResponse({'status': 'Password or username are incorrect'})
+
+        user_list = user_list[0]
         
-        try:
-            userauthvalues = UserAuth.objects.filter(email=email).values()
-            if (userauthvalues[0]['email'] == email and userauthvalues[0]['password'] == password):
-                return generateJWT(requestBody=requestBody)
-        except:
-           return HttpResponseBadRequest("Email isn't in database")
-        return HttpResponseBadRequest("Incorrect password")
+        DB_userid = user_list[0]
+        DB_email = user_list[1]
+        DB_password = user_list[2]
+
+        if(email != DB_email or password != DB_password):
+            return JsonResponse({'status': 'Password or username are incorrect'})
+
+            
+        return generateJWT(requestBody=requestBody)
     else:
         return HttpResponseBadRequest("not a post request")
 
