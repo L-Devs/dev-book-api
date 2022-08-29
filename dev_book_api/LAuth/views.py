@@ -1,5 +1,7 @@
 from datetime import datetime
 import email
+from genericpath import exists
+import http
 import json
 from lib2to3.pgen2 import token
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
@@ -14,22 +16,20 @@ def login(request):
     if (request.method == "POST"):
         requestBodyUnicode = request.body.decode('utf-8')
         requestBody = json.loads(requestBodyUnicode)
+        email = requestBody['email']
+        password = requestBody['password']
         
 
-        if (requestBody['email'] == None or requestBody['password'] == None):
+        if (email == "" or password == ""):
             return HttpResponseBadRequest('No email or password.')
-        secret_key = "6e010f75d1c0245a8631cb13371cd9dafcdaa5b3"
+        
         try:
-            uservalues = User.objects.filter(email=requestBody['email']).values()
-            userauthvalues = UserAuth.objects.filter(userid=uservalues[0]['userid']).values()
-            if (uservalues[0]['email'] == requestBody['email'] and userauthvalues[0]['password']):
-                userauthobject = UserAuth.objects.get(userid=uservalues[0]['userid'])
-                userauthobject.token = jwt.encode(payload=requestBody, key=secret_key)
-                userauthobject.token_expiration = datetime.now() + timedelta(days = 2)
-                userauthobject.save()
-                return JsonResponse({"token" : userauthobject.token}, safe=False)
+            userauthvalues = UserAuth.objects.filter(email=email).values()
+            if (userauthvalues[0]['email'] == email and userauthvalues[0]['password'] == password):
+                return generateJWT(requestBody=requestBody)
         except:
            return HttpResponseBadRequest("Email isn't in database")
+        return HttpResponseBadRequest("Incorrect password")
     else:
         return HttpResponseBadRequest("not a post request")
 
@@ -49,20 +49,35 @@ def signup(request):
         password = requestBody['password']
         username = requestBody['username']
 
-        if (email == None or password == None or username == None):
-            return HttpResponseBadRequest("Signup Failed")
-        else:
-            userauthz = UserAuth(email=email, password=password)
-            userauthz.save()
+        if (email == "" or password == "" or username == ""):
+            return HttpResponseBadRequest("Need all info")
+        if UserAuth.objects.filter(email=email).exists():
+            return HttpResponseBadRequest("Email Already Used")
+        if User.objects.filter(username=username).exists():
+            return HttpResponseBadRequest("Username Already Used")
 
-            temp = UserAuth.objects.filter(email=email).values()
-            
-            usermain = User(userid=temp[0]['userid'], username=username, email=email)    
-            usermain.save()
 
-            usersAuth_list = UserAuth.objects.all()
-            usersMain_list = User.objects.all()
-            return HttpResponse(usersAuth_list.values_list())          
+        userauthz = UserAuth(email=email, password=password)
+        userauthz.save()
+
+        temp = UserAuth.objects.filter(email=email).values()
+        
+        usermain = User(userid=temp[0]['userid'], username=username, email=email)    
+        usermain.save()
+
+        return generateJWT(requestBody=requestBody)        
     else:
         return HttpResponseBadRequest("not a post request")
+
+
+def generateJWT(requestBody):
+    secret_key = "6e010f75d1c0245a8631cb13371cd9dafcdaa5b3"
+    userauthobject = UserAuth.objects.get(email=requestBody['email'])
+    userauthobject.token = jwt.encode(payload=requestBody, key=secret_key)
+    userauthobject.token_expiration = datetime.now() + timedelta(days = 2)
+    userauthobject.save()
+    return JsonResponse({"token" : userauthobject.token}, safe=False)
+    
+
+
 
