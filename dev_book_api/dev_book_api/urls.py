@@ -17,13 +17,13 @@ from django.contrib import admin
 from django.urls import path
 from LAuth.views import login
 from LAuth.views import signup 
-from UserInformation.views import userinfo
+from UserInformation.views import userprofile
 
 
 urlpatterns = [         
     path('admin/', admin.site.urls),
     path('login/', login),
     path("signup/", signup),
-    path('userprofile/', userinfo),
+    path('userprofile/', userprofile),
 ]
 
