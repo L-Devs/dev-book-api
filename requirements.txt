@@ -2,5 +2,6 @@ django
 django-countries
 django-phone-field
 mysql
+jwt
 python-dotenv
 django-environ

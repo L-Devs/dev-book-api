@@ -1,5 +1,5 @@
 from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse, HttpResponseBadRequest,HttpResponseNotFound,JsonResponse
+from django.http import HttpResponse,JsonResponse
 import json
 from .models import UserInformation
 
@@ -38,7 +38,7 @@ def userprofile(request):
     elif (request.method == "PUT"):
         try:
             userInfoObj = UserInformation.objects.get(userId=requestData["userId"])
-
+        
             if(requestData["targetField"] == "userId"):
                 return JsonResponse({'status': 'Error', 'description': 'You cannot update the value of userId'})
 
