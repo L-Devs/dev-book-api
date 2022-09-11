@@ -1,42 +1,50 @@
 from datetime import datetime
 import email
 from genericpath import exists
-import http
 import json
 from lib2to3.pgen2 import token
+from uuid import uuid4
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
-from .models import UserAuth, User
+from .models import User, UserAuth, UserSessions
 from datetime import datetime, timedelta
 import jwt
 import json
 
 # Create your views here.
 def login(request):
+    requestBodyUnicode = request.body.decode('utf-8')
+    requestBody = json.loads(requestBodyUnicode)
     if (request.method == "POST"):
-        requestBodyUnicode = request.body.decode('utf-8')
-        requestBody = json.loads(requestBodyUnicode)
-        email = requestBody['email']
-        password = requestBody['password']
-        
+        try:
+            queryResult = UserAuth.objects.filter(email=requestBody['email'])
 
-        if (email == None or password == None):
-            return HttpResponseBadRequest('No email or password.')   
-
-        user_list = UserAuth.objects.filter(email=email).values_list()
-        if(not user_list):
-            return JsonResponse({'status': 'Password or username are incorrect'})
-
-        user_list = user_list[0]
-        
-        DB_userid = user_list[0]
-        DB_email = user_list[1]
-        DB_password = user_list[2]
-
-        if(email != DB_email or password != DB_password):
-            return JsonResponse({'status': 'Password or username are incorrect'})
-
+            # Checking if the filter has found any users with the userId given
+            if (not queryResult):
+                return JsonResponse({'status': 'Error', 'description': 'userId does not exist'})
             
-        return generateJWT(requestBody=requestBody)
+            # Getting the list of data from the query
+            dataList = queryResult.values_list()[0]
+            
+            DB_userid = dataList[0]
+            DB_email = dataList[1]
+            DB_password = dataList[2]
+
+            if(requestBody['email'] != DB_email or requestBody['password'] != DB_password):
+                return JsonResponse({'status': 'Password or username are incorrect'})
+
+        except KeyError:
+            return JsonResponse({'status': 'Error', 'description': 'Please provide an email'})   
+
+        except IndexError as e:
+            return JsonResponse({'status': 'Error', 'description': 'Authentication information for this user was not populated correctly', 'verboseError': str(e)})
+
+        uniqueToken = generateUniqueToken()
+
+        tokenExpiration = datetime.now() + timedelta(days = 2)
+        sessionModelObj = UserSessions(token=uniqueToken, tokenExpiration=tokenExpiration, userId=DB_userid)
+        sessionModelObj.save()
+
+        return JsonResponse({'status': 'Success', 'description': 'Logged in','token':uniqueToken})
     else:
         return HttpResponseBadRequest("not a post request")
 
@@ -49,42 +57,56 @@ def signup(request):
     # Validation
     # hash password
     # idk
+    requestBodyUnicode = request.body.decode('utf-8')
+    requestBody = json.loads(requestBodyUnicode)
     if (request.method == "POST"):
-        requestBodyUnicode = request.body.decode('utf-8')
-        requestBody = json.loads(requestBodyUnicode)
-        email = requestBody['email']
-        password = requestBody['password']
-        username = requestBody['username']
+        try:
+            email = requestBody['email']
+            password = requestBody['password']
+            username = requestBody['username']
 
-        if (email == "" or password == "" or username == ""):
-            return HttpResponseBadRequest("Need all info")
-        if UserAuth.objects.filter(email=email).exists():
-            return HttpResponseBadRequest("Email Already Used")
-        if User.objects.filter(username=username).exists():
-            return HttpResponseBadRequest("Username Already Used")
-
-
-        userauthz = UserAuth(email=email, password=password)
-        userauthz.save()
-
-        temp = UserAuth.objects.filter(email=email).values()
+            if UserAuth.objects.filter(email=email).exists():
+                return JsonResponse({'status': 'Error', 'description': 'This email is already registered'})   
+            if User.objects.filter(username=username).exists():
+                return JsonResponse({'status': 'Error', 'description': 'This username is already registered'})   
         
-        usermain = User(userid=temp[0]['userid'], username=username, email=email)    
-        usermain.save()
+            authModelObj = UserAuth(email=email, password=password)
+            authModelObj.save()
 
-        return generateJWT(requestBody=requestBody)        
+            queryResult = UserAuth.objects.filter(email=email).values('userid')
+            queryResult = queryResult[0]
+            
+            userModelObj = User(userid=queryResult['userid'], username=username, email=email)    
+            userModelObj.save()
+
+        except KeyError:
+            return JsonResponse({'status': 'Error', 'description': 'Please provide an email, password and username.'})   
+
+        uniqueToken = generateUniqueToken()       
+                
+        tokenExpiration = datetime.now() + timedelta(days = 2)
+
+        DB_sessionObj = UserSessions(token=uniqueToken, tokenExpiration=tokenExpiration, userId=queryResult['userid'])
+        DB_sessionObj.save()
+
+        return JsonResponse({'status': 'Success', 'description': 'Signed up','token':uniqueToken})     
     else:
         return HttpResponseBadRequest("not a post request")
 
 
-def generateJWT(requestBody):
-    secret_key = "6e010f75d1c0245a8631cb13371cd9dafcdaa5b3"
-    userauthobject = UserAuth.objects.get(email=requestBody['email'])
-    userauthobject.token = jwt.encode(payload=requestBody, key=secret_key)
-    userauthobject.token_expiration = datetime.now() + timedelta(days = 2)
-    userauthobject.save()
-    return JsonResponse({"token" : userauthobject.token}, safe=False)
-    
+def generateUniqueToken():
+    newToken = uuid4()
+
+    # Checking if the newly generated token is unique
+    notUnique = True
+    while notUnique:
+        existingTokenObj = UserSessions.objects.filter(token=newToken)
+        if(not existingTokenObj):
+            notUnique = False
+        else:
+            newToken = uuid4()
+    return newToken
+
 
 
 

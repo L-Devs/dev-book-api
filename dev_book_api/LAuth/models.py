@@ -48,9 +48,6 @@ class UserAuth(models.Model):
     userid = models.IntegerField(primary_key=True,unique=True)
     email = models.EmailField(verbose_name='email', max_length=255, unique=True)
     password = models.CharField(verbose_name='password', max_length=255)
-    token = models.CharField(verbose_name='token', max_length=256)
-    token_expiration = models.DateTimeField(verbose_name='tokenExpiration')
-
     active = models.BooleanField(default=True)
 
     class Meta:
@@ -58,3 +55,14 @@ class UserAuth(models.Model):
 
     def __str__(self) -> str:
         return self.email
+
+class UserSessions(models.Model):
+    token = models.CharField(primary_key=True, unique=True,verbose_name='token', max_length=255)
+    tokenExpiration = models.DateTimeField(verbose_name='tokenExpiration')
+    userId = models.IntegerField(verbose_name='userid')
+
+    class Meta:
+        db_table = "UserSessions"
+
+    def __str__(self) -> str:
+        return self.userid
