@@ -25,4 +25,4 @@ class UserInformation(models.Model):
         db_table = "UserInformation"
 
     def __str__(self) -> str:
-        return self.first_name
+        return self.firstName

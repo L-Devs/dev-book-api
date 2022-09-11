@@ -13,23 +13,30 @@ def userprofile(request):
     requestData = json.loads(requestDataUnicode)
     if (request.method == 'GET'):
         try:
-            userInfoObj = UserInformation.objects.filter(userId=requestData["userId"])
-            userInfoObj = userInfoObj.values_list()[0]
+            queryResult = UserInformation.objects.filter(userId=requestData["userId"])
+
+            # Checking if the filter has found any users with the userId given
+            if (not queryResult):
+                return JsonResponse({'status': 'Error', 'description': 'userId does not exist'})
+
+            dataList = queryResult.values_list()[0]
+            
             jsonOut = {
-                "userId": userInfoObj[0],
-                "firstName": userInfoObj[1],
-                "lastName":  userInfoObj[2],
-                "birthDate":  userInfoObj[3],
-                "gender":  userInfoObj[4],
-                "phoneNumber":  userInfoObj[5],
-                "country":  userInfoObj[6],
+                "userId": dataList[0],
+                "firstName": dataList[1],
+                "lastName":  dataList[2],
+                "birthDate":  dataList[3],
+                "gender":  dataList[4],
+                "phoneNumber":  dataList[5],
+                "country":  dataList[6],
             }
-        except UserInformation.DoesNotExist:
-            return JsonResponse({'status': 'Error', 'description': 'userId does not exist'})
+
         except KeyError:
             return JsonResponse({'status': 'Error', 'description': 'Please provide a userId'})
+
         except IndexError as e:
-            return JsonResponse({'status': 'Error', 'description': 'User information for this user was not populated correctly', 'verboseError': str(e)})
+            return JsonResponse({'status': 'Error', 'description': 'User information for this user was likely not populated correctly', 'verboseError': str(e)})
+            
         except Exception as e:
             return JsonResponse({'status': 'Error', 'description': 'Generic', 'verboseError': str(e)})
         else:
@@ -37,13 +44,13 @@ def userprofile(request):
 
     elif (request.method == "PUT"):
         try:
-            userInfoObj = UserInformation.objects.get(userId=requestData["userId"])
+            queryResult = UserInformation.objects.get(userId=requestData["userId"])
         
             if(requestData["targetField"] == "userId"):
                 return JsonResponse({'status': 'Error', 'description': 'You cannot update the value of userId'})
 
-            setattr(userInfoObj, requestData["targetField"], requestData["newValue"])
-            userInfoObj.save()
+            setattr(queryResult, requestData["targetField"], requestData["newValue"])
+            queryResult.save()
             return JsonResponse({'status': 'Success','description': 'Successfully updated the field ' + requestData["targetField"]})
         except Exception as e:
             return JsonResponse({'status': 'Error', 'description': 'Missing userId, targetField or newValue'})
