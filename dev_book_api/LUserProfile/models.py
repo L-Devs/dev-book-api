@@ -3,7 +3,7 @@ from django_countries.fields import CountryField
 
 # Create your models here.
 
-class UserInformation(models.Model):
+class LUserProfileModel(models.Model):
     GENDER_CHOICES = (
         ('M', 'Male'),
         ('F', 'Female'),
@@ -22,7 +22,7 @@ class UserInformation(models.Model):
 
     
     class Meta:
-        db_table = "UserInformation"
+        db_table = "UserProfiles"
 
     def __str__(self) -> str:
         return self.firstName

@@ -1,7 +1,7 @@
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse,JsonResponse
 import json
-from .models import UserInformation
+from .models import LUserProfileModel
 
 # Create your views here.
 def blank(request):
@@ -13,7 +13,7 @@ def userprofile(request):
     requestData = json.loads(requestDataUnicode)
     if (request.method == 'GET'):
         try:
-            queryResult = UserInformation.objects.filter(userId=requestData["userId"])
+            queryResult = LUserProfileModel.objects.filter(userId=requestData["userId"])
 
             # Checking if the filter has found any users with the userId given
             if (not queryResult):
@@ -44,7 +44,7 @@ def userprofile(request):
 
     elif (request.method == "PUT"):
         try:
-            queryResult = UserInformation.objects.get(userId=requestData["userId"])
+            queryResult = LUserProfileModel.objects.get(userId=requestData["userId"])
         
             if(requestData["targetField"] == "userId"):
                 return JsonResponse({'status': 'Error', 'description': 'You cannot update the value of userId'})
