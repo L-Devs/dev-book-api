@@ -7,7 +7,6 @@ from uuid import uuid4
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from .models import User, UserAuth, UserSessions
 from datetime import datetime, timedelta
-import jwt
 import json
 
 # Create your views here.
