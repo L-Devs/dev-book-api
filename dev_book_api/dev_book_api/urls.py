@@ -20,8 +20,11 @@ from LUserProfile.views import userprofile
 
 
 urlpatterns = [         
+    path('login', login),
     path('login/', login),
+    path("signup", signup),
     path("signup/", signup),
-    path('userprofile/', userprofile),
+    path('userprofile', userprofile),
+    path('userprofile/', userprofile)
 ]
 
