@@ -1,6 +1,7 @@
 django
 django-countries
 django-phone-field
+django-cors-headers
 mysql
 python-dotenv
 django-environ

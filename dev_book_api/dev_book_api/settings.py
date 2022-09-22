@@ -33,13 +33,15 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
-INSTALLED_APPS = [ 
+INSTALLED_APPS = [
+  'corsheaders', 
     # Local Apps
     'LAuth',
     'LUserProfile'
 ]
 
 MIDDLEWARE = [
+   'corsheaders.middleware.CorsMiddleware'
 ]
 
 ROOT_URLCONF = 'dev_book_api.urls'
@@ -90,3 +92,8 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CORS_ORIGIN_ALLOW_ALL = False
+CORS_ORIGIN_WHITELIST = (
+  'http://localhost:8000',
+)
