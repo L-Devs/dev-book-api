@@ -44,7 +44,7 @@ def login(request):
         sessionModelObj = UserSessions(token=uniqueToken, tokenExpiration=tokenExpiration, userId=DB_userid)
         sessionModelObj.save()
 
-        return JsonResponse({'status': 'Success', 'message': 'Logged in','token':uniqueToken},status=OK)
+        return JsonResponse({'status': 'Success', 'message': 'Logged in'},status=OK).set_cookie('session_token', uniqueToken)   
     else:
         return JsonResponse({'status': 'Error','message':"This endpoint only supports POST requests"}, status=NOT_FOUND)
 
@@ -89,7 +89,7 @@ def signup(request):
         DB_sessionObj = UserSessions(token=uniqueToken, tokenExpiration=tokenExpiration, userId=queryResult['userid'])
         DB_sessionObj.save()
 
-        return JsonResponse({'status': 'Success', 'message': 'Signed up','token':uniqueToken}, status=CREATED)     
+        return JsonResponse({'status': 'Success', 'message': 'Signed up'}, status=CREATED).set_cookie('session_token', uniqueToken)     
     else:
         return JsonResponse({'status': 'Error','message':"This endpoint only supports POST requests"}, status=NOT_FOUND)
 
