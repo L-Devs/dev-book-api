@@ -1,3 +1,4 @@
+from http.client import BAD_REQUEST, CREATED, FORBIDDEN, INTERNAL_SERVER_ERROR, NOT_FOUND, OK
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse,JsonResponse
 import json
@@ -17,7 +18,7 @@ def userprofile(request):
 
             # Checking if the filter has found any users with the userId given
             if (not queryResult):
-                return JsonResponse({'status': 'Error', 'description': 'userId does not exist'})
+                return JsonResponse({'status': 'Error', 'message': 'userId does not exist'}, status=NOT_FOUND)
 
             dataList = queryResult.values_list()[0]
             
@@ -32,31 +33,31 @@ def userprofile(request):
             }
 
         except KeyError:
-            return JsonResponse({'status': 'Error', 'description': 'Please provide a userId'})
+            return JsonResponse({'status': 'Error', 'message': 'userId not found in payload'}, status=BAD_REQUEST)
 
         except IndexError as e:
-            return JsonResponse({'status': 'Error', 'description': 'User information for this user was likely not populated correctly', 'verboseError': str(e)})
+            return JsonResponse({'status': 'Error', 'message': 'User information for this user was likely not populated correctly', 'verboseError': str(e)}, status=INTERNAL_SERVER_ERROR)
             
         except Exception as e:
-            return JsonResponse({'status': 'Error', 'description': 'Generic', 'verboseError': str(e)})
+            return JsonResponse({'status': 'Error', 'message': 'Generic', 'verboseError': str(e)}, status=INTERNAL_SERVER_ERROR)
         else:
-             return JsonResponse({'status': 'Success', 'description': 'Successfully got user the profile information', 'data': jsonOut})
+             return JsonResponse({'status': 'Success', 'message': 'Successfully got user the profile information', 'data': jsonOut}, status=OK)
 
     elif (request.method == "PUT"):
         try:
             queryResult = LUserProfileModel.objects.get(userId=requestData["userId"])
         
             if(requestData["targetField"] == "userId"):
-                return JsonResponse({'status': 'Error', 'description': 'You cannot update the value of userId'})
+                return JsonResponse({'status': 'Error', 'message': 'You cannot update the value of \'userId\''}, status=FORBIDDEN)
 
             setattr(queryResult, requestData["targetField"], requestData["newValue"])
             queryResult.save()
-            return JsonResponse({'status': 'Success','description': 'Successfully updated the field ' + requestData["targetField"]})
+            return JsonResponse({'status': 'Success','message': 'Successfully updated the field ' + requestData["targetField"]}, status=CREATED)
         except Exception as e:
-            return JsonResponse({'status': 'Error', 'description': 'Missing userId, targetField or newValue'})
+            return JsonResponse({'status': 'Error', 'message': 'Missing userId, targetField or newValue'}, status=BAD_REQUEST)
 
     elif(request.method == 'POST'):
-        return JsonResponse({'status': 'Error', 'description': 'Generic'})
+        return JsonResponse({'status': 'Error', 'message': 'Generic'}, status=BAD_REQUEST)
         # Okkio: TEMPORARILY OFF TO BE REVIEWD
     #     jsondata = json.loads(request.body)
     #     Username = jsondata["Username"]

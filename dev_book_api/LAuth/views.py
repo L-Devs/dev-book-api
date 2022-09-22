@@ -1,6 +1,7 @@
 from datetime import datetime
 import email
 from genericpath import exists
+from http.client import BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR, NOT_FOUND, OK, UNAUTHORIZED
 import json
 from lib2to3.pgen2 import token
 from uuid import uuid4
@@ -19,7 +20,7 @@ def login(request):
 
             # Checking if the filter has found any users with the userId given
             if (not queryResult):
-                return JsonResponse({'status': 'Error', 'description': 'userId does not exist'})
+                return JsonResponse({'status': 'Error', 'message': 'email is not registered'}, status=NOT_FOUND)
             
             # Getting the list of data from the query
             dataList = queryResult.values_list()[0]
@@ -29,13 +30,13 @@ def login(request):
             DB_password = dataList[2]
 
             if(requestBody['email'] != DB_email or requestBody['password'] != DB_password):
-                return JsonResponse({'status': 'Password or username are incorrect'})
+                return JsonResponse({'status': 'Error','message':'Email or password are incorrect'}, status=UNAUTHORIZED)
 
         except KeyError:
-            return JsonResponse({'status': 'Error', 'description': 'Please provide an email'})   
+            return JsonResponse({'status': 'Error', 'message': 'Email or password not found in payload'}, status=BAD_REQUEST)   
 
         except IndexError as e:
-            return JsonResponse({'status': 'Error', 'description': 'Authentication information for this user was not populated correctly', 'verboseError': str(e)})
+            return JsonResponse({'status': 'Error', 'message': 'Authentication information for this user was not populated correctly', 'verboseError': str(e)}, status=INTERNAL_SERVER_ERROR)
 
         uniqueToken = generateUniqueToken()
 
@@ -43,9 +44,9 @@ def login(request):
         sessionModelObj = UserSessions(token=uniqueToken, tokenExpiration=tokenExpiration, userId=DB_userid)
         sessionModelObj.save()
 
-        return JsonResponse({'status': 'Success', 'description': 'Logged in','token':uniqueToken})
+        return JsonResponse({'status': 'Success', 'message': 'Logged in','token':uniqueToken},status=OK)
     else:
-        return HttpResponseBadRequest("not a post request")
+        return JsonResponse({'status': 'Error','message':"This endpoint only supports POST requests"}, status=NOT_FOUND)
 
 
 
@@ -65,9 +66,9 @@ def signup(request):
             username = requestBody['username']
 
             if UserAuth.objects.filter(email=email).exists():
-                return JsonResponse({'status': 'Error', 'description': 'This email is already registered'})   
+                return JsonResponse({'status': 'Error', 'message': 'This email is already registered'}, status=UNAUTHORIZED)   
             if User.objects.filter(username=username).exists():
-                return JsonResponse({'status': 'Error', 'description': 'This username is already registered'})   
+                return JsonResponse({'status': 'Error', 'message': 'This username is already registered'}, status=UNAUTHORIZED)   
         
             authModelObj = UserAuth(email=email, password=password)
             authModelObj.save()
@@ -79,7 +80,7 @@ def signup(request):
             userModelObj.save()
 
         except KeyError:
-            return JsonResponse({'status': 'Error', 'description': 'Please provide an email, password and username.'})   
+            return JsonResponse({'status': 'Error', 'message': 'Email, password or username not found in payload.'}, status=BAD_REQUEST)   
 
         uniqueToken = generateUniqueToken()       
                 
@@ -88,9 +89,9 @@ def signup(request):
         DB_sessionObj = UserSessions(token=uniqueToken, tokenExpiration=tokenExpiration, userId=queryResult['userid'])
         DB_sessionObj.save()
 
-        return JsonResponse({'status': 'Success', 'description': 'Signed up','token':uniqueToken})     
+        return JsonResponse({'status': 'Success', 'message': 'Signed up','token':uniqueToken}, status=CREATED)     
     else:
-        return HttpResponseBadRequest("not a post request")
+        return JsonResponse({'status': 'Error','message':"This endpoint only supports POST requests"}, status=NOT_FOUND)
 
 
 def generateUniqueToken():
