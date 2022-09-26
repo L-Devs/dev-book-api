@@ -1,5 +1,4 @@
 from datetime import datetime
-import email
 from genericpath import exists
 from http.client import BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR, NOT_FOUND, OK, UNAUTHORIZED
 import json
@@ -101,6 +100,17 @@ def signup(request):
         return response
     else:
         return JsonResponse({'status': 'Error','message':"This endpoint only supports POST requests"}, status=NOT_FOUND)
+
+def isTokenValid(inToken) -> bool:
+    try:
+        existingTokenObj = UserSessions.objects.get(token=inToken)
+        tokenExpiration = existingTokenObj.tokenExpiration
+        if tokenExpiration < datetime.now():
+            return False
+        else:
+            return True
+    except UserSessions.DoesNotExist:
+        return False
 
 
 def generateUniqueToken():
