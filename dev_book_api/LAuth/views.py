@@ -12,8 +12,11 @@ import json
 
 # Create your views here.
 def login(request):
-    requestBodyUnicode = request.body.decode('utf-8')
-    requestBody = json.loads(requestBodyUnicode)
+    try:
+        requestBodyUnicode = request.body.decode('utf-8')
+        requestBody = json.loads(requestBodyUnicode)
+    except json.JSONDecodeError:
+        return JsonResponse ({'status': 'Error', 'message': 'invalid JSON'}, status=BAD_REQUEST)
     if (request.method == "POST"):
         try:
             queryResult = UserAuth.objects.filter(email=requestBody['email'])
@@ -55,11 +58,14 @@ def login(request):
 
 def signup(request):
     #TO-DO:
-    # Validation
-    # hash password
-    # idk
-    requestBodyUnicode = request.body.decode('utf-8')
-    requestBody = json.loads(requestBodyUnicode)
+    # Validate the data and request Filtering (login and signup)
+    # Hash passwords
+    # Testing
+    try:
+        requestBodyUnicode = request.body.decode('utf-8')
+        requestBody = json.loads(requestBodyUnicode)
+    except json.JSONDecodeError:
+        return JsonResponse ({'status': 'Error', 'message': 'invalid JSON'}, status=BAD_REQUEST)
     if (request.method == "POST"):
         try:
             email = requestBody['email']
