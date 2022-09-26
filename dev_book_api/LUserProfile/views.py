@@ -1,8 +1,9 @@
-from http.client import BAD_REQUEST, CREATED, FORBIDDEN, INTERNAL_SERVER_ERROR, NOT_FOUND, OK
+from http.client import BAD_REQUEST, CREATED, FORBIDDEN, INTERNAL_SERVER_ERROR, NOT_FOUND, OK, UNAUTHORIZED
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, JsonResponse
 import json
 from .models import LUserProfileModel
+from LAuth.views import isTokenValid
 
 # Create your views here.
 
@@ -11,13 +12,23 @@ def blank(request):
     return HttpResponse("Blank url is working")
 
 
-@csrf_exempt
+# @csrf_exempt
 def setupUserProfile(request):
     try:
         requestBodyUnicode = request.body.decode('utf-8')
         requestBody = json.loads(requestBodyUnicode)
     except json.JSONDecodeError:
         return JsonResponse({'status': 'Error', 'message': 'invalid JSON'}, status=BAD_REQUEST)
+
+    if 'session_token' not in request.COOKIES:
+        return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, no session token found in cookies.'}, status=UNAUTHORIZED)
+
+    sessionToken = request.COOKIES['session_token']
+    if not isTokenValid(sessionToken):
+        return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, your session is invalid.'}, status=UNAUTHORIZED)
+
+
+        
     if (request.method == "POST"):
         try:
             if LUserProfileModel.objects.filter(userId=requestBody["userId"]).exists():
@@ -48,6 +59,15 @@ def getUserProfile(request):
         requestBody = json.loads(requestBodyUnicode)
     except json.JSONDecodeError:
         return JsonResponse({'status': 'Error', 'message': 'invalid JSON'}, status=BAD_REQUEST)
+
+    if 'session_token' not in request.COOKIES:
+        return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, no session token found in cookies.'}, status=UNAUTHORIZED)
+
+    sessionToken = request.COOKIES['session_token']
+    if not isTokenValid(sessionToken):
+        return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, your session is invalid.'}, status=UNAUTHORIZED)
+
+    print( request.COOKIES)
 
     if (request.method == 'GET'):
         try:
@@ -90,6 +110,13 @@ def updateUserProfileField(request):
     except json.JSONDecodeError:
         return JsonResponse({'status': 'Error', 'message': 'invalid JSON'}, status=BAD_REQUEST)
 
+    if 'session_token' not in request.COOKIES:
+        return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, no session token found in cookies.'}, status=UNAUTHORIZED)
+
+    sessionToken = request.COOKIES['session_token']
+    if not isTokenValid(sessionToken):
+        return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, your session is invalid.'}, status=UNAUTHORIZED)
+
     if (request.method == "PUT"):
         try:
             queryResult = LUserProfileModel.objects.get(userId=requestBody["userId"])
@@ -117,6 +144,13 @@ def deleteUserProfile(request):
         requestBody = json.loads(requestBodyUnicode)
     except json.JSONDecodeError:
         return JsonResponse({'status': 'Error', 'message': 'invalid JSON'}, status=BAD_REQUEST)
+    
+    if 'session_token' not in request.COOKIES:
+        return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, no session token found in cookies.'}, status=UNAUTHORIZED)
+
+    sessionToken = request.COOKIES['session_token']
+    if not isTokenValid(sessionToken):
+        return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, your session is invalid.'}, status=UNAUTHORIZED)
 
     if request.method == "DELETE":
 
