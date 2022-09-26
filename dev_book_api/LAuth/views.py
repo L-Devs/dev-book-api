@@ -16,7 +16,7 @@ def login(request):
         requestBodyUnicode = request.body.decode('utf-8')
         requestBody = json.loads(requestBodyUnicode)
     except json.JSONDecodeError:
-        return JsonResponse ({'status': 'Error', 'message': 'invalid JSON'})
+        return JsonResponse ({'status': 'Error', 'message': 'invalid JSON'}, status=BAD_REQUEST)
     if (request.method == "POST"):
         try:
             queryResult = UserAuth.objects.filter(email=requestBody['email'])
@@ -65,7 +65,7 @@ def signup(request):
         requestBodyUnicode = request.body.decode('utf-8')
         requestBody = json.loads(requestBodyUnicode)
     except json.JSONDecodeError:
-        return JsonResponse ({'status': 'Error', 'message': 'invalid JSON'})
+        return JsonResponse ({'status': 'Error', 'message': 'invalid JSON'}, status=BAD_REQUEST)
     if (request.method == "POST"):
         try:
             email = requestBody['email']
