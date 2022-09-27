@@ -128,5 +128,11 @@ def generateUniqueToken():
     return newToken
 
 
+def getUserId(inToken) ->int:
+    try:
+        existingTokenObj = UserSessions.objects.get(token=inToken)
+        return existingTokenObj.userId
+    except UserSessions.DoesNotExist:
+        return -1
 
 
