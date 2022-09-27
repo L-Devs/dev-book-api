@@ -135,4 +135,18 @@ def getUserId(inToken) ->int:
     except UserSessions.DoesNotExist:
         return -1
 
+def devGetUserId(request) ->str:
+    if (request.method == "GET"):
 
+        if 'session_token' not in request.COOKIES:
+            return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, no session token found in cookies.'}, status=UNAUTHORIZED)
+
+        sessionToken = request.COOKIES['session_token']
+        userId = getUserId(sessionToken)
+        if userId == -1:
+            return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, token is invalid.'}, status=UNAUTHORIZED)
+
+        return JsonResponse({'status': 'Success', 'message': 'Successfully retrieved userId', 'userId':userId}, status=OK)
+        
+    else:
+        return JsonResponse({'status': 'Error','message':"This endpoint only supports GET requests"}, status=NOT_FOUND)
