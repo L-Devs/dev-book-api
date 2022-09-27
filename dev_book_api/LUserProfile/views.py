@@ -3,7 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, JsonResponse
 import json
 from .models import LUserProfileModel
-from LAuth.views import isTokenValid
+from LAuth.views import isTokenValid,getUserId
 
 # Create your views here.
 
@@ -31,11 +31,15 @@ def setupUserProfile(request):
         
     if (request.method == "POST"):
         try:
-            if LUserProfileModel.objects.filter(userId=requestBody["userId"]).exists():
+            DB_userId = getUserId(sessionToken)
+            if DB_userId == -1:
+                return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, your session is invalid.'}, status=UNAUTHORIZED)
+
+            if LUserProfileModel.objects.filter(userId=DB_userId).exists():
                 return JsonResponse({'status': 'Error', 'message': 'A user profile for this userId already exists.'}, status=FORBIDDEN)
 
             userProfileModelObj = LUserProfileModel(
-                userId=requestBody["userId"],
+                userId=DB_userId,
                 firstName=requestBody["firstName"],
                 lastName=requestBody["lastName"],
                 birthDate=requestBody["birthDate"],
@@ -54,12 +58,6 @@ def setupUserProfile(request):
 
 
 def getUserProfile(request):
-    try:
-        requestBodyUnicode = request.body.decode('utf-8')
-        requestBody = json.loads(requestBodyUnicode)
-    except json.JSONDecodeError:
-        return JsonResponse({'status': 'Error', 'message': 'invalid JSON'}, status=BAD_REQUEST)
-
     if 'session_token' not in request.COOKIES:
         return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, no session token found in cookies.'}, status=UNAUTHORIZED)
 
@@ -69,16 +67,19 @@ def getUserProfile(request):
 
     if (request.method == 'GET'):
         try:
-            queryResult = LUserProfileModel.objects.filter(userId=requestBody["userId"])
+            DB_userId = getUserId(sessionToken)
+            if DB_userId == -1:
+                return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, your session is invalid.'}, status=UNAUTHORIZED)
+
+            queryResult = LUserProfileModel.objects.filter(userId=DB_userId)
 
             # Checking if the filter has found any users with the userId given
             if (not queryResult):
-                return JsonResponse({'status': 'Error', 'message': 'userId does not exist'}, status=NOT_FOUND)
+                return JsonResponse({'status': 'Error', 'message': 'A user profile for this userId does not exist'}, status=NOT_FOUND)
 
             dataList = queryResult.values_list()[0]
 
             jsonOut = {
-                "userId": dataList[0],
                 "firstName": dataList[1],
                 "lastName":  dataList[2],
                 "birthDate":  dataList[3],
@@ -86,6 +87,10 @@ def getUserProfile(request):
                 "phoneNumber":  dataList[5],
                 "country":  dataList[6],
             }
+
+
+        except LUserProfileModel.DoesNotExist:
+            return JsonResponse({'status': 'Error', 'message': 'A user profile for this userId does not exist'}, status=NOT_FOUND)
 
         except KeyError:
             return JsonResponse({'status': 'Error', 'message': 'userId not found in payload'}, status=BAD_REQUEST)
@@ -117,7 +122,11 @@ def updateUserProfileField(request):
 
     if (request.method == "PUT"):
         try:
-            queryResult = LUserProfileModel.objects.get(userId=requestBody["userId"])
+            DB_userId = getUserId(sessionToken)
+            if DB_userId == -1:
+                return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, your session is invalid.'}, status=UNAUTHORIZED)
+
+            queryResult = LUserProfileModel.objects.get(userId=DB_userId)
 
             if (requestBody["targetField"] == "userId"):
                 return JsonResponse({'status': 'Error', 'message': 'You cannot update the value of \'userId\''}, status=FORBIDDEN)
@@ -126,23 +135,21 @@ def updateUserProfileField(request):
                     requestBody["targetField"], requestBody["newValue"])
             queryResult.save()
             return JsonResponse({'status': 'Success', 'message': 'Successfully updated the field ' + requestBody["targetField"]}, status=CREATED)
+
         except LUserProfileModel.DoesNotExist:
-            return JsonResponse({'status': 'Error', 'message': 'The user profile for this userId was not found'}, status=NOT_FOUND)
+            return JsonResponse({'status': 'Error', 'message': 'A user profile for this userId does not exist'}, status=NOT_FOUND)
+
         except KeyError:
             return JsonResponse({'status': 'Error', 'message': 'userId, targetField or newValue not found in payload'}, status=BAD_REQUEST)
+
         except Exception as e:
             return JsonResponse({'status': 'Error', 'message': 'Missing userId, targetField or newValue'}, status=BAD_REQUEST)
+
     else:
         return JsonResponse({'status': 'Error', 'message': 'This end point only accepts PUT requests.'}, status=BAD_REQUEST)
 
 
 def deleteUserProfile(request):
-    try:
-        requestBodyUnicode = request.body.decode('utf-8')
-        requestBody = json.loads(requestBodyUnicode)
-    except json.JSONDecodeError:
-        return JsonResponse({'status': 'Error', 'message': 'invalid JSON'}, status=BAD_REQUEST)
-    
     if 'session_token' not in request.COOKIES:
         return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, no session token found in cookies.'}, status=UNAUTHORIZED)
 
@@ -153,13 +160,20 @@ def deleteUserProfile(request):
     if request.method == "DELETE":
 
         try:
-            queryResult = LUserProfileModel.objects.get(userId=requestBody["userId"])
+            DB_userId = getUserId(sessionToken)
+            if DB_userId == -1:
+                return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, your session is invalid.'}, status=UNAUTHORIZED)
+
+            queryResult = LUserProfileModel.objects.get(userId=DB_userId)
             queryResult.delete()
 
             return JsonResponse({'status': 'Success', 'message': 'User profile successfully deleted'}, status=OK)
+
         except KeyError:
             return JsonResponse({'status': 'Error', 'message': 'userId was not found in the payload.'}, status=BAD_REQUEST)
+
         except LUserProfileModel.DoesNotExist:
-            return JsonResponse({'status': 'Error', 'message': 'A user profile for this userId does not exists.'}, status=FORBIDDEN)
+            return JsonResponse({'status': 'Error', 'message': 'A user profile for this userId does not exist'}, status=NOT_FOUND)
+
     else:
         return JsonResponse({'status': 'Error', 'message': 'This end point only accepts DELETE requests.'}, status=BAD_REQUEST)
