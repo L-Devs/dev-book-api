@@ -67,8 +67,6 @@ def getUserProfile(request):
     if not isTokenValid(sessionToken):
         return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, your session is invalid.'}, status=UNAUTHORIZED)
 
-    print( request.COOKIES)
-
     if (request.method == 'GET'):
         try:
             queryResult = LUserProfileModel.objects.filter(userId=requestBody["userId"])

@@ -106,6 +106,7 @@ def isTokenValid(inToken) -> bool:
         existingTokenObj = UserSessions.objects.get(token=inToken)
         tokenExpiration = existingTokenObj.tokenExpiration
         if tokenExpiration < datetime.now():
+            existingTokenObj.delete()
             return False
         else:
             return True
