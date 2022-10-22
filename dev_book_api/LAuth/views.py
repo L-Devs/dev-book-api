@@ -1,26 +1,28 @@
 from datetime import datetime
-import email
 from genericpath import exists
+from http.client import BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR, NOT_FOUND, OK, UNAUTHORIZED
 import json
 from lib2to3.pgen2 import token
 from uuid import uuid4
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from .models import User, UserAuth, UserSessions
 from datetime import datetime, timedelta
-import jwt
 import json
 
 # Create your views here.
 def login(request):
-    requestBodyUnicode = request.body.decode('utf-8')
-    requestBody = json.loads(requestBodyUnicode)
+    try:
+        requestBodyUnicode = request.body.decode('utf-8')
+        requestBody = json.loads(requestBodyUnicode)
+    except json.JSONDecodeError:
+        return JsonResponse ({'status': 'Error', 'message': 'invalid JSON'}, status=BAD_REQUEST)
     if (request.method == "POST"):
         try:
             queryResult = UserAuth.objects.filter(email=requestBody['email'])
 
             # Checking if the filter has found any users with the userId given
             if (not queryResult):
-                return JsonResponse({'status': 'Error', 'description': 'userId does not exist'})
+                return JsonResponse({'status': 'Error', 'message': 'email is not registered'}, status=NOT_FOUND)
             
             # Getting the list of data from the query
             dataList = queryResult.values_list()[0]
@@ -30,23 +32,24 @@ def login(request):
             DB_password = dataList[2]
 
             if(requestBody['email'] != DB_email or requestBody['password'] != DB_password):
-                return JsonResponse({'status': 'Password or username are incorrect'})
+                return JsonResponse({'status': 'Error','message':'Email or password are incorrect'}, status=UNAUTHORIZED)
 
         except KeyError:
-            return JsonResponse({'status': 'Error', 'description': 'Please provide an email'})   
+            return JsonResponse({'status': 'Error', 'message': 'Email or password not found in payload'}, status=BAD_REQUEST)   
 
         except IndexError as e:
-            return JsonResponse({'status': 'Error', 'description': 'Authentication information for this user was not populated correctly', 'verboseError': str(e)})
+            return JsonResponse({'status': 'Error', 'message': 'Authentication information for this user was not populated correctly', 'verboseError': str(e)}, status=INTERNAL_SERVER_ERROR)
 
         uniqueToken = generateUniqueToken()
 
         tokenExpiration = datetime.now() + timedelta(days = 2)
         sessionModelObj = UserSessions(token=uniqueToken, tokenExpiration=tokenExpiration, userId=DB_userid)
         sessionModelObj.save()
-
-        return JsonResponse({'status': 'Success', 'description': 'Logged in','token':uniqueToken})
+        response = JsonResponse({'status': 'Success', 'message': 'Logged in'},status=OK)
+        response.set_cookie('session_token', uniqueToken, samesite='none', secure=True)   
+        return response
     else:
-        return HttpResponseBadRequest("not a post request")
+        return JsonResponse({'status': 'Error','message':"This endpoint only supports POST requests"}, status=NOT_FOUND)
 
 
 
@@ -54,11 +57,14 @@ def login(request):
 
 def signup(request):
     #TO-DO:
-    # Validation
-    # hash password
-    # idk
-    requestBodyUnicode = request.body.decode('utf-8')
-    requestBody = json.loads(requestBodyUnicode)
+    # Validate the data and request Filtering (login and signup)
+    # Hash passwords
+    # Testing
+    try:
+        requestBodyUnicode = request.body.decode('utf-8')
+        requestBody = json.loads(requestBodyUnicode)
+    except json.JSONDecodeError:
+        return JsonResponse ({'status': 'Error', 'message': 'invalid JSON'}, status=BAD_REQUEST)
     if (request.method == "POST"):
         try:
             email = requestBody['email']
@@ -66,9 +72,9 @@ def signup(request):
             username = requestBody['username']
 
             if UserAuth.objects.filter(email=email).exists():
-                return JsonResponse({'status': 'Error', 'description': 'This email is already registered'})   
+                return JsonResponse({'status': 'Error', 'message': 'This email is already registered'}, status=UNAUTHORIZED)   
             if User.objects.filter(username=username).exists():
-                return JsonResponse({'status': 'Error', 'description': 'This username is already registered'})   
+                return JsonResponse({'status': 'Error', 'message': 'This username is already registered'}, status=UNAUTHORIZED)   
         
             authModelObj = UserAuth(email=email, password=password)
             authModelObj.save()
@@ -80,7 +86,7 @@ def signup(request):
             userModelObj.save()
 
         except KeyError:
-            return JsonResponse({'status': 'Error', 'description': 'Please provide an email, password and username.'})   
+            return JsonResponse({'status': 'Error', 'message': 'Email, password or username not found in payload.'}, status=BAD_REQUEST)   
 
         uniqueToken = generateUniqueToken()       
                 
@@ -89,9 +95,23 @@ def signup(request):
         DB_sessionObj = UserSessions(token=uniqueToken, tokenExpiration=tokenExpiration, userId=queryResult['userid'])
         DB_sessionObj.save()
 
-        return JsonResponse({'status': 'Success', 'description': 'Signed up','token':uniqueToken})     
+        response = JsonResponse({'status': 'Success', 'message': 'Signed up'}, status=CREATED)
+        response.set_cookie('session_token', uniqueToken, samesite='none',secure=True)
+        return response
     else:
-        return HttpResponseBadRequest("not a post request")
+        return JsonResponse({'status': 'Error','message':"This endpoint only supports POST requests"}, status=NOT_FOUND)
+
+def isTokenValid(inToken) -> bool:
+    try:
+        existingTokenObj = UserSessions.objects.get(token=inToken)
+        tokenExpiration = existingTokenObj.tokenExpiration
+        if tokenExpiration < datetime.now():
+            existingTokenObj.delete()
+            return False
+        else:
+            return True
+    except UserSessions.DoesNotExist:
+        return False
 
 
 def generateUniqueToken():
@@ -108,5 +128,25 @@ def generateUniqueToken():
     return newToken
 
 
+def getUserId(inToken) ->int:
+    try:
+        existingTokenObj = UserSessions.objects.get(token=inToken)
+        return existingTokenObj.userId
+    except UserSessions.DoesNotExist:
+        return -1
 
+def devGetUserId(request) ->str:
+    if (request.method == "GET"):
 
+        if 'session_token' not in request.COOKIES:
+            return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, no session token found in cookies.'}, status=UNAUTHORIZED)
+
+        sessionToken = request.COOKIES['session_token']
+        userId = getUserId(sessionToken)
+        if userId == -1:
+            return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, token is invalid.'}, status=UNAUTHORIZED)
+
+        return JsonResponse({'status': 'Success', 'message': 'Successfully retrieved userId', 'userId':userId}, status=OK)
+        
+    else:
+        return JsonResponse({'status': 'Error','message':"This endpoint only supports GET requests"}, status=NOT_FOUND)
