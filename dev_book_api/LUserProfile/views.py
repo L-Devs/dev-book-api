@@ -3,7 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, JsonResponse
 import json
 from .models import LUserProfileModel
-from LAuth.views import isTokenValid,getUserId
+from LAuth.views import isTokenValid,GetUserId
 
 # Create your views here.
 
@@ -13,7 +13,7 @@ def blank(request):
 
 
 # @csrf_exempt
-def setupUserProfile(request):
+def SetupUserProfile(request):
     try:
         requestBodyUnicode = request.body.decode('utf-8')
         requestBody = json.loads(requestBodyUnicode)
@@ -31,7 +31,7 @@ def setupUserProfile(request):
         
     if (request.method == "POST"):
         try:
-            DB_userId = getUserId(sessionToken)
+            DB_userId = GetUserId(sessionToken)
             if DB_userId == -1:
                 return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, your session is invalid.'}, status=UNAUTHORIZED)
 
@@ -57,7 +57,7 @@ def setupUserProfile(request):
         return JsonResponse({'status': 'Error', 'message': 'This end point only accepts POST requests.'}, status=BAD_REQUEST)
 
 
-def getUserProfile(request):
+def GetUserProfile(request):
     if 'session_token' not in request.COOKIES:
         return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, no session token found in cookies.'}, status=UNAUTHORIZED)
 
@@ -67,7 +67,7 @@ def getUserProfile(request):
 
     if (request.method == 'GET'):
         try:
-            DB_userId = getUserId(sessionToken)
+            DB_userId = GetUserId(sessionToken)
             if DB_userId == -1:
                 return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, your session is invalid.'}, status=UNAUTHORIZED)
 
@@ -106,7 +106,7 @@ def getUserProfile(request):
         return JsonResponse({'status': 'Error', 'message': 'This end point only accepts GET requests.'}, status=BAD_REQUEST)
 
 
-def updateUserProfileField(request):
+def UpdateUserProfileField(request):
     try:
         requestBodyUnicode = request.body.decode('utf-8')
         requestBody = json.loads(requestBodyUnicode)
@@ -122,11 +122,11 @@ def updateUserProfileField(request):
 
     if (request.method == "PUT"):
         try:
-            DB_userId = getUserId(sessionToken)
+            DB_userId = GetUserId(sessionToken)
             if DB_userId == -1:
                 return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, your session is invalid.'}, status=UNAUTHORIZED)
 
-            queryResult = LUserProfileModel.objects.get(userId=DB_userId)
+            queryResult:LUserProfileModel = LUserProfileModel.objects.get(userId=DB_userId)
 
             if (requestBody["targetField"] == "userId"):
                 return JsonResponse({'status': 'Error', 'message': 'You cannot update the value of \'userId\''}, status=FORBIDDEN)
@@ -149,7 +149,7 @@ def updateUserProfileField(request):
         return JsonResponse({'status': 'Error', 'message': 'This end point only accepts PUT requests.'}, status=BAD_REQUEST)
 
 
-def deleteUserProfile(request):
+def DeleteUserProfile(request):
     if 'session_token' not in request.COOKIES:
         return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, no session token found in cookies.'}, status=UNAUTHORIZED)
 
@@ -160,7 +160,7 @@ def deleteUserProfile(request):
     if request.method == "DELETE":
 
         try:
-            DB_userId = getUserId(sessionToken)
+            DB_userId = GetUserId(sessionToken)
             if DB_userId == -1:
                 return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, your session is invalid.'}, status=UNAUTHORIZED)
 

@@ -10,17 +10,18 @@ from datetime import datetime, timedelta
 import json
 
 # Create your views here.
-def login(request):
+def Login(request):
     try:
         requestBodyUnicode = request.body.decode('utf-8')
         requestBody = json.loads(requestBodyUnicode)
     except json.JSONDecodeError:
         return JsonResponse ({'status': 'Error', 'message': 'invalid JSON'}, status=BAD_REQUEST)
+
     if (request.method == "POST"):
         try:
             queryResult = UserAuth.objects.filter(email=requestBody['email'])
 
-            # Checking if the filter has found any users with the userId given
+            # Checking if the filter has found any users with the email given
             if (not queryResult):
                 return JsonResponse({'status': 'Error', 'message': 'email is not registered'}, status=NOT_FOUND)
             
@@ -55,7 +56,7 @@ def login(request):
 
 #Sign up function
 
-def signup(request):
+def Signup(request):
     #TO-DO:
     # Validate the data and request Filtering (login and signup)
     # Hash passwords
@@ -103,7 +104,7 @@ def signup(request):
 
 def isTokenValid(inToken) -> bool:
     try:
-        existingTokenObj = UserSessions.objects.get(token=inToken)
+        existingTokenObj:UserSessions = UserSessions.objects.get(token=inToken)
         tokenExpiration = existingTokenObj.tokenExpiration
         if tokenExpiration < datetime.now():
             existingTokenObj.delete()
@@ -128,7 +129,7 @@ def generateUniqueToken():
     return newToken
 
 
-def getUserId(inToken) ->int:
+def GetUserId(inToken) ->int:
     try:
         existingTokenObj = UserSessions.objects.get(token=inToken)
         return existingTokenObj.userId
@@ -142,7 +143,7 @@ def devGetUserId(request) ->str:
             return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, no session token found in cookies.'}, status=UNAUTHORIZED)
 
         sessionToken = request.COOKIES['session_token']
-        userId = getUserId(sessionToken)
+        userId = GetUserId(sessionToken)
         if userId == -1:
             return JsonResponse({'status': 'Error', 'message': 'Failed to authenticate, token is invalid.'}, status=UNAUTHORIZED)
 
