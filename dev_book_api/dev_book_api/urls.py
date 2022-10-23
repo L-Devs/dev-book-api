@@ -14,25 +14,27 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.urls import path
-from LAuth.views import login, signup, devGetUserId
-from LUserProfile.views import getUserProfile, updateUserProfileField, setupUserProfile, deleteUserProfile
+from LAuth.views import Login, Signup, devGetUserId
+from LUserProfile.views import GetUserProfile, UpdateUserProfileField, SetupUserProfile, DeleteUserProfile
+from LPost.views import CreatePost
 
 
 urlpatterns = [   
     path('devGetUserId', devGetUserId),
     path('devGetUserId/', devGetUserId),
-    path('login', login),
-    path('login/', login),
-    path("signup", signup),
-    path("signup/", signup),
-    path('userProfile/getProfile', getUserProfile),
-    path('userProfile/getProfile/', getUserProfile),
-    path('userProfile/setupProfile', setupUserProfile),
-    path('userProfile/setupProfile/', setupUserProfile),
-    path('userProfile/updateProfileField', updateUserProfileField),
-    path('userProfile/updateProfileField/', updateUserProfileField),
-    path('userProfile/deleteProfile', deleteUserProfile),
-    path('userProfile/deleteProfile/', deleteUserProfile)
-
+    path('login', Login),
+    path('login/', Login),
+    path('signup', Signup),
+    path('signup/', Signup),
+    path('userProfile/getProfile', GetUserProfile),
+    path('userProfile/getProfile/', GetUserProfile),
+    path('userProfile/setupProfile', SetupUserProfile),
+    path('userProfile/setupProfile/', SetupUserProfile),
+    path('userProfile/updateProfileField', UpdateUserProfileField),
+    path('userProfile/updateProfileField/', UpdateUserProfileField),
+    path('userProfile/deleteProfile', DeleteUserProfile),
+    path('userProfile/deleteProfile/', DeleteUserProfile),
+    path('Post/CreatePost', CreatePost),
+    path('Post/CreatePost/', CreatePost)
 ]
 
